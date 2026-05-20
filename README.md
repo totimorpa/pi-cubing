@@ -2,6 +2,9 @@
 
 A cstimer-style Rubik's Cube timer overlay for [Pi](https://pi.dev).
 
+<img width="1428" height="846" alt="image" src="https://github.com/user-attachments/assets/7a0e5131-d252-4aaa-9919-490e80c872e5" />
+
+
 ## Features
 
 - `/cubing` command opens a modal/overlay timer in the terminal.
