@@ -1,0 +1,48 @@
+{
+  "name": "pi-cubing",
+  "version": "0.1.0",
+  "description": "A cstimer-style Rubik's Cube timer overlay for Pi, with scrambles, averages, ratings, and local solve persistence.",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-extension",
+    "cubing",
+    "rubiks-cube",
+    "speedcubing",
+    "timer",
+    "cstimer"
+  ],
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/totimorpa/pi-cubing.git"
+  },
+  "bugs": {
+    "url": "https://github.com/totimorpa/pi-cubing/issues"
+  },
+  "homepage": "https://github.com/totimorpa/pi-cubing#readme",
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "pack:dry": "npm pack --dry-run"
+  },
+  "files": [
+    "extensions",
+    "README.md",
+    "LICENSE"
+  ]
+}
