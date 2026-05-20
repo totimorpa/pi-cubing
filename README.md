@@ -68,7 +68,7 @@ Controls:
 | `p` | Toggle `+2` penalty |
 | `x` | Toggle `DNF` |
 | `n` / `r` | New scramble |
-| `Shift+C` | Clear solves |
+| `Shift+C` | Confirm clear all solves |
 
 ## Persistence
 

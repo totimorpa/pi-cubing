@@ -526,7 +526,8 @@ function renderBig(text: string, width: number, color: (s: string) => string): s
 type DialogState =
 	| { kind: "help" }
 	| { kind: "info"; solve: Solve; index: number }
-	| { kind: "delete"; solve: Solve; index: number };
+	| { kind: "delete"; solve: Solve; index: number }
+	| { kind: "clear"; count: number };
 
 class CubeTimerComponent {
 	wantsKeyRelease = true;
@@ -602,10 +603,7 @@ class CubeTimerComponent {
 			this.currentScramble = generateScramble();
 			this.changed(true);
 		} else if (!released && data === "C") {
-			this.solves = [];
-			this.selectedIndex = -1;
-			this.lastStoppedMs = 0;
-			this.changed(true);
+			this.confirmClearSolves();
 		}
 	}
 
@@ -681,7 +679,7 @@ class CubeTimerComponent {
 		const dialogWidth = Math.max(34, Math.min(76, width - 4));
 		const bodyWidth = Math.max(10, dialogWidth - 4);
 		const lines: string[] = [];
-		const title = this.dialog?.kind === "help" ? "Help" : this.dialog?.kind === "info" ? "Solve info" : "Delete solve?";
+		const title = this.dialog?.kind === "help" ? "Help" : this.dialog?.kind === "info" ? "Solve info" : this.dialog?.kind === "clear" ? "Clear all solves?" : "Delete solve?";
 		lines.push(boxTop(dialogWidth, MAGENTA(BOLD(title))));
 
 		if (this.dialog?.kind === "help") {
@@ -726,6 +724,11 @@ class CubeTimerComponent {
 			lines.push(boxLine(`Time: ${displayedSolveTime(solve)}`, dialogWidth));
 			lines.push(boxLine("", dialogWidth));
 			lines.push(boxLine(`${GREEN("y")} yes, delete     ${RED("n")} no, keep`, dialogWidth));
+		} else if (this.dialog?.kind === "clear") {
+			lines.push(boxLine(`Clear all ${this.dialog.count} solve(s)?`, dialogWidth));
+			lines.push(boxLine("This cannot be undone.", dialogWidth));
+			lines.push(boxLine("", dialogWidth));
+			lines.push(boxLine(`${GREEN("y")} yes, clear all     ${RED("n")} no, keep`, dialogWidth));
 		}
 
 		lines.push(boxBottom(dialogWidth));
@@ -734,9 +737,10 @@ class CubeTimerComponent {
 
 	private handleDialogInput(data: string): void {
 		if (!this.dialog) return;
-		if (this.dialog.kind === "delete") {
+		if (this.dialog.kind === "delete" || this.dialog.kind === "clear") {
 			if (data === "y" || data === "Y") {
-				this.deleteSelectedConfirmed();
+				if (this.dialog.kind === "delete") this.deleteSelectedConfirmed();
+				else this.clearSolvesConfirmed();
 				this.dialog = null;
 				this.changed(true);
 				return;
@@ -882,6 +886,18 @@ class CubeTimerComponent {
 		if (this.selectedIndex < 0 || this.solves.length === 0) return;
 		this.solves.splice(this.selectedIndex, 1);
 		this.selectedIndex = Math.min(this.selectedIndex, this.solves.length - 1);
+	}
+
+	private confirmClearSolves(): void {
+		if (this.solves.length === 0) return;
+		this.dialog = { kind: "clear", count: this.solves.length };
+		this.changed(false);
+	}
+
+	private clearSolvesConfirmed(): void {
+		this.solves = [];
+		this.selectedIndex = -1;
+		this.lastStoppedMs = 0;
 	}
 
 	private togglePlusTwo(): void {

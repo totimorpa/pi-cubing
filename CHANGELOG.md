@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- Add confirmation dialog for clearing all solves.
+
 ## 0.1.3
 
 - Improve help dialog layout: one shortcut per line with colored keys and lighter descriptions.
