@@ -523,6 +523,11 @@ function renderBig(text: string, width: number, color: (s: string) => string): s
 	return rows.map((row) => center(color(row), width));
 }
 
+type DialogState =
+	| { kind: "help" }
+	| { kind: "info"; solve: Solve; index: number }
+	| { kind: "delete"; solve: Solve; index: number };
+
 class CubeTimerComponent {
 	wantsKeyRelease = true;
 
@@ -541,6 +546,7 @@ class CubeTimerComponent {
 	private cachedLines: string[] = [];
 	private version = 0;
 	private lastEscAt = 0;
+	private dialog: DialogState | null = null;
 
 	constructor(
 		private tui: { requestRender: () => void; terminal?: { rows: number } },
@@ -556,6 +562,12 @@ class CubeTimerComponent {
 
 	handleInput(data: string): void {
 		const released = isKeyRelease(data);
+
+		if (this.dialog) {
+			if (!released) this.handleDialogInput(data);
+			return;
+		}
+
 		const space = matchesKey(data, Key.space) || data === " ";
 
 		if (space) {
@@ -571,12 +583,17 @@ class CubeTimerComponent {
 
 		if (this.phase === "running") return;
 
-		if (!released && (matchesKey(data, Key.down) || data === "j" || data === "J")) {
+		if (!released && (data === "h" || data === "H")) {
+			this.dialog = { kind: "help" };
+			this.changed(false);
+		} else if (!released && (data === "i" || data === "I")) {
+			this.showSelectedInfo();
+		} else if (!released && (matchesKey(data, Key.down) || data === "j" || data === "J")) {
 			this.selectOlder();
 		} else if (!released && (matchesKey(data, Key.up) || data === "k" || data === "K")) {
 			this.selectNewer();
 		} else if (!released && (matchesKey(data, Key.backspace) || matchesKey(data, Key.delete) || data === "d" || data === "D")) {
-			this.deleteSelected();
+			this.confirmDeleteSelected();
 		} else if (!released && (data === "p" || data === "P")) {
 			this.togglePlusTwo();
 		} else if (!released && (data === "x" || data === "X")) {
@@ -603,7 +620,7 @@ class CubeTimerComponent {
 		const targetContentHeight = this.getTargetContentHeight();
 
 		if (this.phase === "running") {
-			const content = this.buildTimerOnly(innerWidth, targetContentHeight).map((line) => fit(line, innerWidth));
+			const content = this.applyDialog(this.buildTimerOnly(innerWidth, targetContentHeight).map((line) => fit(line, innerWidth)), innerWidth);
 			this.cachedLines = this.withOuterBorder(content, width);
 			this.cachedWidth = width;
 			this.cachedVersion = this.version;
@@ -623,7 +640,7 @@ class CubeTimerComponent {
 			lines.push(fit(left[i] ?? "", leftWidth) + gap + fit(right[i] ?? "", rightWidth));
 		}
 
-		const content = lines.map((line) => fit(line, innerWidth));
+		const content = this.applyDialog(lines.map((line) => fit(line, innerWidth)), innerWidth);
 		this.cachedLines = this.withOuterBorder(content, width);
 		this.cachedWidth = width;
 		this.cachedVersion = this.version;
@@ -647,6 +664,86 @@ class CubeTimerComponent {
 		if (!rows || rows < 10) return 26;
 		// `render()` only receives width, not overlay height. Leave room for Pi's editor/footer.
 		return Math.max(18, Math.min(28, rows - 14));
+	}
+
+	private applyDialog(lines: string[], width: number): string[] {
+		if (!this.dialog) return lines;
+		const dialogLines = this.buildDialog(width);
+		const start = Math.max(0, Math.floor((lines.length - dialogLines.length) / 2));
+		const next = [...lines];
+		for (let i = 0; i < dialogLines.length && start + i < next.length; i++) {
+			next[start + i] = center(dialogLines[i], width);
+		}
+		return next;
+	}
+
+	private buildDialog(width: number): string[] {
+		const dialogWidth = Math.max(34, Math.min(76, width - 4));
+		const bodyWidth = Math.max(10, dialogWidth - 4);
+		const lines: string[] = [];
+		const title = this.dialog?.kind === "help" ? "Help" : this.dialog?.kind === "info" ? "Solve info" : "Delete solve?";
+		lines.push(boxTop(dialogWidth, MAGENTA(BOLD(title))));
+
+		if (this.dialog?.kind === "help") {
+			for (const line of [
+				"Space hold/release: start timer",
+				"Space while running: stop/save",
+				"↑/k newer solve  ↓/j older solve",
+				"i solve info  d delete  p +2  x DNF",
+				"n/r new scramble  Shift+C clear",
+				"Esc reset timer  Esc Esc close overlay",
+				"Esc closes this help dialog",
+			]) {
+				lines.push(boxLine(line, dialogWidth));
+			}
+		} else if (this.dialog?.kind === "info") {
+			const solve = this.dialog.solve;
+			const date = new Date(solve.timestamp).toLocaleString();
+			for (const line of [
+				`Solve #${this.dialog.index + 1}`,
+				`Time: ${displayedSolveTime(solve)}   raw: ${formatTime(solve.timeMs)}`,
+				`Penalty: ${solve.penalty === 0 ? "none" : solve.penalty}`,
+				`Rating: ${solve.rating}`,
+				`Date: ${date}`,
+				"Scramble:",
+			]) {
+				lines.push(boxLine(line, dialogWidth));
+			}
+			for (const line of wrapWords(solve.scramble, bodyWidth)) lines.push(boxLine(line, dialogWidth));
+			lines.push(boxLine("Esc closes this dialog", dialogWidth));
+		} else if (this.dialog?.kind === "delete") {
+			const solve = this.dialog.solve;
+			lines.push(boxLine(`Delete solve #${this.dialog.index + 1}?`, dialogWidth));
+			lines.push(boxLine(`Time: ${displayedSolveTime(solve)}`, dialogWidth));
+			lines.push(boxLine("", dialogWidth));
+			lines.push(boxLine(`${GREEN("y")} yes, delete     ${RED("n")} no, keep`, dialogWidth));
+		}
+
+		lines.push(boxBottom(dialogWidth));
+		return lines;
+	}
+
+	private handleDialogInput(data: string): void {
+		if (!this.dialog) return;
+		if (this.dialog.kind === "delete") {
+			if (data === "y" || data === "Y") {
+				this.deleteSelectedConfirmed();
+				this.dialog = null;
+				this.changed(true);
+				return;
+			}
+			if (data === "n" || data === "N" || matchesKey(data, Key.escape)) {
+				this.dialog = null;
+				this.changed(false);
+				return;
+			}
+			return;
+		}
+
+		if (matchesKey(data, Key.escape) || data === "h" || data === "H" || data === "i" || data === "I") {
+			this.dialog = null;
+			this.changed(false);
+		}
 	}
 
 	private handleEscape(): void {
@@ -758,11 +855,24 @@ class CubeTimerComponent {
 		this.changed(true);
 	}
 
-	private deleteSelected(): void {
+	private showSelectedInfo(): void {
+		const solve = this.selectedSolve();
+		if (!solve) return;
+		this.dialog = { kind: "info", solve, index: this.selectedIndex };
+		this.changed(false);
+	}
+
+	private confirmDeleteSelected(): void {
+		const solve = this.selectedSolve();
+		if (!solve) return;
+		this.dialog = { kind: "delete", solve, index: this.selectedIndex };
+		this.changed(false);
+	}
+
+	private deleteSelectedConfirmed(): void {
 		if (this.selectedIndex < 0 || this.solves.length === 0) return;
 		this.solves.splice(this.selectedIndex, 1);
 		this.selectedIndex = Math.min(this.selectedIndex, this.solves.length - 1);
-		this.changed(true);
 	}
 
 	private togglePlusTwo(): void {
@@ -813,9 +923,9 @@ class CubeTimerComponent {
 						boxTop(width, BLUE(BOLD("Controls"))),
 						boxLine("Space: hold → green → release", width),
 						boxLine("Space while running: stop/save", width),
-						boxLine("↑/↓ select  d delete  p +2  x DNF", width),
-						boxLine("n new scramble  Shift+C clear", width),
-						boxLine("Esc reset  •  Esc Esc close", width),
+						boxLine("↑/↓ select  h help  i info", width),
+						boxLine("d delete  p +2  x DNF", width),
+						boxLine("n new scramble  Esc reset/close", width),
 						boxBottom(width),
 					]
 				: [];

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- Add `h` help dialog with controls.
+- Add `i` solve-info dialog with scramble, date, time, penalty, and rating.
+- Make delete prompt for `y`/`n` confirmation.
+
 ## 0.1.1
 
 - Make stopwatch digits tabular/fixed-width so centiseconds do not make the timer wiggle.

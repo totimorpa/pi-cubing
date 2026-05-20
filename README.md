@@ -61,7 +61,10 @@ Controls:
 | `Esc` twice | Close overlay |
 | `↑` / `k` | Select newer solve |
 | `↓` / `j` | Select older solve |
-| `d` / `Delete` / `Backspace` | Delete selected solve |
+| `h` | Show help dialog |
+| `i` | Show selected solve info |
+| `d` / `Delete` / `Backspace` | Confirm delete selected solve |
+| `y` / `n` | Confirm/cancel delete dialog |
 | `p` | Toggle `+2` penalty |
 | `x` | Toggle `DNF` |
 | `n` / `r` | New scramble |
