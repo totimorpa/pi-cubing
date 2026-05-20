@@ -61,7 +61,7 @@ Controls:
 | `Esc` twice | Close overlay |
 | `↑` / `k` | Select newer solve |
 | `↓` / `j` | Select older solve |
-| `h` | Show help dialog |
+| `h` | Show help dialog with one shortcut per line |
 | `i` | Show selected solve info |
 | `d` / `Delete` / `Backspace` | Confirm delete selected solve |
 | `y` / `n` | Confirm/cancel delete dialog |

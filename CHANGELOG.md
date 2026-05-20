@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Improve help dialog layout: one shortcut per line with colored keys and lighter descriptions.
+
 ## 0.1.2
 
 - Add `h` help dialog with controls.

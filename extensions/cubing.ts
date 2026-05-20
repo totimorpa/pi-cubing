@@ -685,16 +685,25 @@ class CubeTimerComponent {
 		lines.push(boxTop(dialogWidth, MAGENTA(BOLD(title))));
 
 		if (this.dialog?.kind === "help") {
-			for (const line of [
-				"Space hold/release: start timer",
-				"Space while running: stop/save",
-				"↑/k newer solve  ↓/j older solve",
-				"i solve info  d delete  p +2  x DNF",
-				"n/r new scramble  Shift+C clear",
-				"Esc reset timer  Esc Esc close overlay",
-				"Esc closes this help dialog",
-			]) {
-				lines.push(boxLine(line, dialogWidth));
+			const key = (text: string) => CYAN(BOLD(text.padEnd(12, " ")));
+			const desc = (text: string) => WHITE(text);
+			const helpRows: Array<[string, string]> = [
+				["Space", "hold, then release to start"],
+				["Space", "stop and save while running"],
+				["↑ / k", "select newer solve"],
+				["↓ / j", "select older solve"],
+				["h", "show this help"],
+				["i", "show selected solve info"],
+				["d", "delete selected solve"],
+				["p", "toggle +2 penalty"],
+				["x", "toggle DNF"],
+				["n / r", "new scramble"],
+				["Shift+C", "clear solves"],
+				["Esc", "reset timer / close dialog"],
+				["Esc Esc", "close overlay"],
+			];
+			for (const [shortcut, description] of helpRows) {
+				lines.push(boxLine(`${key(shortcut)} ${desc(description)}`, dialogWidth));
 			}
 		} else if (this.dialog?.kind === "info") {
 			const solve = this.dialog.solve;

@@ -1,6 +1,6 @@
 {
   "name": "pi-cubing",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A cstimer-style Rubik's Cube timer overlay for Pi, with scrambles, averages, ratings, and local solve persistence.",
   "type": "module",
   "keywords": [
