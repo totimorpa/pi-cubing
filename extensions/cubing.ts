@@ -499,13 +499,28 @@ const BIG_DIGITS: Record<string, string[]> = {
 	" ": ["     ", "     ", "     ", "     ", "     "],
 };
 
+function formatTimerTime(ms: number): string {
+	const totalCentis = Math.floor(ms / 10);
+	const centis = totalCentis % 100;
+	const totalSeconds = Math.floor(totalCentis / 100);
+	const seconds = totalSeconds % 60;
+	const minutes = Math.floor(totalSeconds / 60);
+	if (minutes > 0) return `${minutes}:${String(seconds).padStart(2, "0")}.${String(centis).padStart(2, "0")}`;
+	return `${String(seconds).padStart(2, "0")}.${String(centis).padStart(2, "0")}`;
+}
+
 function renderBig(text: string, width: number, color: (s: string) => string): string[] {
 	const rows = ["", "", "", "", ""];
 	for (const char of text) {
 		const glyph = BIG_DIGITS[char] ?? BIG_DIGITS[" "];
-		for (let i = 0; i < rows.length; i++) rows[i] += glyph[i] + " ";
+		for (let i = 0; i < rows.length; i++) {
+			// Keep every character in a fixed 5-column slot and never trim rows.
+			// This makes the stopwatch tabular, so centiseconds changing does not
+			// recenter individual rows and make the whole timer appear to wiggle.
+			rows[i] += glyph[i].padEnd(5, " ") + " ";
+		}
 	}
-	return rows.map((row) => center(color(row.trimEnd()), width));
+	return rows.map((row) => center(color(row), width));
 }
 
 class CubeTimerComponent {
@@ -864,7 +879,7 @@ class CubeTimerComponent {
 	}
 
 	private buildTimerBox(width: number, height: number): string[] {
-		const timeText = this.lastStoppedMs ? formatTime(this.lastStoppedMs) : "0.00";
+		const timeText = this.lastStoppedMs ? formatTimerTime(this.lastStoppedMs) : "00.00";
 		const color = this.phase === "ready" ? GREEN : this.phase === "holding" ? YELLOW : WHITE;
 		const a5 = formatMaybeAverage(ao(this.solves, 5));
 		const a12 = formatMaybeAverage(ao(this.solves, 12));
@@ -893,7 +908,7 @@ class CubeTimerComponent {
 	private buildTimerOnly(width: number, height: number): string[] {
 		const boxWidth = Math.max(32, Math.min(width, 120));
 		const boxHeight = Math.max(12, height);
-		const core = [...renderBig(formatTime(this.displayMs), Math.max(20, boxWidth - 4), BLUE), "", center("SPACE", boxWidth - 4)];
+		const core = [...renderBig(formatTimerTime(this.displayMs), Math.max(20, boxWidth - 4), BLUE), "", center("SPACE", boxWidth - 4)];
 		const innerHeight = Math.max(1, boxHeight - 2);
 		const topPad = Math.max(0, Math.floor((innerHeight - core.length) / 2));
 		const bottomPad = Math.max(0, innerHeight - core.length - topPad);

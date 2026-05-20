@@ -14,6 +14,7 @@ A cstimer-style Rubik's Cube timer overlay for [Pi](https://pi.dev).
   - hold `Space` for ~500ms until ready/green
   - release `Space` to start
   - press `Space` again to stop and save
+- Stable, tabular stopwatch digits so centiseconds do not make the timer wiggle.
 - Solve table with scrolling selection.
 - Stats: mean, mo3, ao5, ao12, ao50, best ao5, best ao12.
 - Per-solve rating: first, PB, great, good, ok, slow.
